@@ -1,0 +1,561 @@
+/* IBM Plex Font Imports */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   THE SOVEREIGN STANDARD - DevinAI Design System
+   ============================================
+   Dark-first design with commission-reveal animations
+   60% Midnight, 25% Vault Glass, 10% Cloud Atrium, 5% Boardroom Accent
+   ============================================ */
+
+:root {
+  /* Primary Palette */
+  --devin-midnight: #03045E;
+  --devin-boardroom: #00B4D8;
+  --devin-cloud: #90E0EF;
+  --devin-vault: #CAF0F8;
+
+  /* Semantic Colors */
+  --devin-background: var(--devin-midnight);
+  --devin-foreground: var(--devin-cloud);
+  --devin-muted: rgba(144, 224, 239, 0.6);
+  --devin-accent: var(--devin-boardroom);
+  --devin-accent-hover: #0096C7;
+
+  /* Component Colors */
+  --devin-card-bg: rgba(202, 240, 248, 0.05);
+  --devin-card-border: rgba(202, 240, 248, 0.15);
+  --devin-input-bg: rgba(202, 240, 248, 0.08);
+  --devin-input-border: rgba(202, 240, 248, 0.2);
+  --devin-input-focus: var(--devin-boardroom);
+
+  /* Animation Timings */
+  --devin-reveal-duration: 800ms;
+  --devin-reveal-easing: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Typography */
+  --font-serif: 'IBM Plex Serif', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background-color: var(--devin-background);
+  color: var(--devin-foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--devin-vault);
+}
+
+h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+h3 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+h4 {
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+}
+
+code, pre {
+  font-family: var(--font-mono);
+}
+
+a {
+  color: var(--devin-accent);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+a:hover {
+  color: var(--devin-vault);
+}
+
+::selection {
+  background-color: var(--devin-boardroom);
+  color: var(--devin-midnight);
+}
+
+/* ============================================
+   BUTTON COMPONENTS
+   ============================================ */
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-all duration-200;
+    background-color: var(--devin-boardroom);
+    color: var(--devin-midnight);
+    font-weight: 600;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--devin-accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0, 180, 216, 0.3);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-all duration-200;
+    background-color: rgba(202, 240, 248, 0.1);
+    color: var(--devin-vault);
+    border: 1px solid var(--devin-card-border);
+  }
+
+  .btn-secondary:hover {
+    background-color: rgba(202, 240, 248, 0.15);
+    border-color: var(--devin-vault);
+  }
+
+  .btn-secondary:active {
+    background-color: rgba(202, 240, 248, 0.2);
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200;
+    background-color: transparent;
+    color: var(--devin-cloud);
+  }
+
+  .btn-ghost:hover {
+    background-color: rgba(202, 240, 248, 0.1);
+    color: var(--devin-vault);
+  }
+
+  /* ============================================
+     CARD COMPONENTS
+     ============================================ */
+
+  .card {
+    @apply rounded-xl p-6;
+    background-color: var(--devin-card-bg);
+    border: 1px solid var(--devin-card-border);
+    backdrop-filter: blur(10px);
+  }
+
+  .card-hover {
+    @apply card transition-all duration-300;
+  }
+
+  .card-hover:hover {
+    border-color: var(--devin-boardroom);
+    box-shadow: 0 0 30px rgba(0, 180, 216, 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* ============================================
+     FORM COMPONENTS
+     ============================================ */
+
+  .input {
+    @apply w-full px-4 py-3 rounded-lg transition-all duration-200 outline-none;
+    background-color: var(--devin-input-bg);
+    border: 1px solid var(--devin-input-border);
+    color: var(--devin-vault);
+    font-family: var(--font-sans);
+  }
+
+  .input::placeholder {
+    color: var(--devin-muted);
+  }
+
+  .input:focus {
+    border-color: var(--devin-input-focus);
+    box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.15);
+  }
+
+  .input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .label {
+    @apply block text-sm font-medium mb-2;
+    color: var(--devin-vault);
+  }
+
+  .textarea {
+    @apply input min-h-[120px] resize-y;
+  }
+
+  .select {
+    @apply input cursor-pointer appearance-none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2390E0EF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+
+  /* ============================================
+     PROSE / BLOG CONTENT
+     ============================================ */
+
+  .prose {
+    @apply max-w-none;
+    color: var(--devin-cloud);
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    color: var(--devin-vault);
+    margin-top: 2em;
+    margin-bottom: 0.75em;
+  }
+
+  .prose h1:first-child,
+  .prose h2:first-child,
+  .prose h3:first-child {
+    margin-top: 0;
+  }
+
+  .prose p {
+    margin-bottom: 1.25em;
+  }
+
+  .prose a {
+    color: var(--devin-boardroom);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .prose a:hover {
+    color: var(--devin-vault);
+  }
+
+  .prose strong {
+    color: var(--devin-vault);
+    font-weight: 600;
+  }
+
+  .prose em {
+    font-style: italic;
+  }
+
+  .prose ul,
+  .prose ol {
+    margin-bottom: 1.25em;
+    padding-left: 1.5em;
+  }
+
+  .prose li {
+    margin-bottom: 0.5em;
+  }
+
+  .prose ul li::marker {
+    color: var(--devin-boardroom);
+  }
+
+  .prose ol li::marker {
+    color: var(--devin-boardroom);
+  }
+
+  .prose blockquote {
+    border-left: 3px solid var(--devin-boardroom);
+    padding-left: 1.25em;
+    margin: 1.5em 0;
+    color: var(--devin-muted);
+    font-style: italic;
+  }
+
+  .prose pre {
+    @apply rounded-lg p-4 overflow-x-auto my-6;
+    background-color: rgba(3, 4, 94, 0.8);
+    border: 1px solid var(--devin-card-border);
+  }
+
+  .prose code {
+    font-size: 0.875em;
+    color: var(--devin-boardroom);
+  }
+
+  .prose pre code {
+    color: var(--devin-cloud);
+  }
+
+  .prose img {
+    @apply rounded-lg my-6;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .prose hr {
+    border: none;
+    border-top: 1px solid var(--devin-card-border);
+    margin: 2em 0;
+  }
+
+  .prose table {
+    @apply w-full my-6;
+    border-collapse: collapse;
+  }
+
+  .prose th,
+  .prose td {
+    @apply px-4 py-2 text-left;
+    border: 1px solid var(--devin-card-border);
+  }
+
+  .prose th {
+    background-color: var(--devin-card-bg);
+    color: var(--devin-vault);
+    font-weight: 600;
+  }
+
+  /* ============================================
+     ANIMATION UTILITIES
+     ============================================ */
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal var(--devin-reveal-duration) var(--devin-reveal-easing) forwards;
+  }
+
+  .reveal-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .reveal-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .reveal-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .reveal-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .reveal-delay-500 {
+    animation-delay: 500ms;
+  }
+
+  @keyframes reveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Commission-style reveal (slower, more dramatic) */
+  .commission-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: commission-reveal 900ms var(--devin-reveal-easing) forwards;
+  }
+
+  @keyframes commission-reveal {
+    0% {
+      opacity: 0;
+      transform: translateY(30px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Fade in animation */
+  .fade-in {
+    animation: fade-in var(--devin-reveal-duration) var(--devin-reveal-easing) forwards;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Slide in from left */
+  .slide-in-left {
+    animation: slide-in-left var(--devin-reveal-duration) var(--devin-reveal-easing) forwards;
+  }
+
+  @keyframes slide-in-left {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Slide in from right */
+  .slide-in-right {
+    animation: slide-in-right var(--devin-reveal-duration) var(--devin-reveal-easing) forwards;
+  }
+
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Respect prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .commission-reveal,
+    .fade-in,
+    .slide-in-left,
+    .slide-in-right {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* ============================================
+     DATA / MONO TEXT
+     ============================================ */
+
+  .mono-data {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    color: var(--devin-boardroom);
+  }
+
+  .stat-value {
+    font-family: var(--font-mono);
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--devin-vault);
+  }
+
+  .stat-label {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--devin-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ============================================
+     UTILITY CLASSES
+     ============================================ */
+
+  .section-padding {
+    @apply py-16 md:py-24 lg:py-32;
+  }
+
+  .container-narrow {
+    @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--devin-vault) 0%, var(--devin-boardroom) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass-panel {
+    background: rgba(3, 4, 94, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--devin-card-border);
+  }
+
+  .divider {
+    @apply w-full h-px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--devin-card-border) 50%,
+      transparent
+    );
+  }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--devin-midnight);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--devin-card-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--devin-muted);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--devin-card-border) var(--devin-midnight);
+}
