@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
-import { FileText, Check, Loader2, ArrowRight, Lock, Mail } from 'lucide-react';
+import { FileText, Check, Loader2, ArrowRight, Lock, Mail, Download } from 'lucide-react';
+
+const FRAMEWORK_PDF_URL = 'https://drive.google.com/uc?export=download&id=1Qp5-E6KV9ibtca21DX6cnqbBNTvJiS3d';
 import { cn } from '@/lib/utils';
 
 const frameworkHighlights = [
@@ -204,14 +206,22 @@ export default function FrameworkPage() {
                       <Check className="w-8 h-8 text-terracotta" />
                     </div>
                     <h3 className="text-xl font-serif font-semibold text-gray-900 mb-2">
-                      Check Your Inbox
+                      Your Framework is Ready
                     </h3>
-                    <p className="text-gray-600 text-sm max-w-xs mx-auto">
-                      We&apos;ve sent the Outcome Architecture Framework to <strong>{email}</strong>.
-                      It should arrive within a few minutes.
+                    <p className="text-gray-600 text-sm max-w-xs mx-auto mb-6">
+                      Thank you! Click below to download the Outcome Architecture Framework.
                     </p>
+                    <a
+                      href={FRAMEWORK_PDF_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center px-6 py-3 bg-terracotta hover:bg-terracotta/90 text-white rounded-xl font-medium transition-all duration-200 shadow-warm"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download PDF
+                    </a>
                     <p className="text-gray-400 text-xs mt-4">
-                      Don&apos;t see it? Check your spam folder.
+                      We&apos;ve also sent a copy to <strong>{email}</strong>
                     </p>
                   </div>
                 )}
