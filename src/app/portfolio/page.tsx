@@ -1,43 +1,73 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
 import { ScrollReveal } from '@/components/shared/ScrollReveal';
 import { PortfolioGrid, IndustryFilter } from '@/components/portfolio';
 import { demoPortfolioProjects } from '@/lib/demo-data';
-import { Briefcase } from 'lucide-react';
+import { supabase, isDemoMode } from '@/lib/supabase';
+import type { PortfolioProject } from '@/lib/types';
+import { Briefcase, Loader2 } from 'lucide-react';
 
 export default function PortfolioPage() {
+  const [projects, setProjects] = useState<PortfolioProject[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeIndustry, setActiveIndustry] = useState<string | null>(null);
 
-  // Get published projects
-  const publishedProjects = useMemo(
-    () => demoPortfolioProjects.filter((p) => p.published),
-    []
-  );
+  useEffect(() => {
+    async function fetchData() {
+      // Check if in demo mode
+      if (isDemoMode()) {
+        setProjects(demoPortfolioProjects.filter((p) => p.published));
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch published projects
+        const { data, error } = await supabase
+          .from('portfolio_projects')
+          .select('*')
+          .eq('published', true)
+          .order('display_order', { ascending: true });
+
+        if (error) throw error;
+
+        setProjects(data || []);
+      } catch (error) {
+        console.error('Error fetching portfolio data:', error);
+        // Fallback to demo data on error
+        setProjects(demoPortfolioProjects.filter((p) => p.published));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
 
   // Get unique industries
   const industries = useMemo(() => {
     const uniqueIndustries = new Set<string>();
-    publishedProjects.forEach((p) => {
+    projects.forEach((p) => {
       if (p.industry) uniqueIndustries.add(p.industry);
     });
     return Array.from(uniqueIndustries).sort();
-  }, [publishedProjects]);
+  }, [projects]);
 
   // Filter projects by industry
   const filteredProjects = useMemo(() => {
-    if (!activeIndustry) return publishedProjects;
-    return publishedProjects.filter((p) => p.industry === activeIndustry);
-  }, [publishedProjects, activeIndustry]);
+    if (!activeIndustry) return projects;
+    return projects.filter((p) => p.industry === activeIndustry);
+  }, [projects, activeIndustry]);
 
   // Calculate total outcomes
   const totalOutcomes = useMemo(() => {
     let costReduction = 0;
     let velocityIncrease = 0;
 
-    publishedProjects.forEach((project) => {
+    projects.forEach((project) => {
       project.outcomes.forEach((outcome) => {
         // Skip if before is 0 to avoid division by zero
         if (outcome.before === 0) return;
@@ -60,7 +90,19 @@ export default function PortfolioPage() {
       costReduction: costReduction || 40,
       velocityIncrease: velocityIncrease || 4
     };
-  }, [publishedProjects]);
+  }, [projects]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cream">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-terracotta" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream">
@@ -88,11 +130,11 @@ export default function PortfolioPage() {
           </ScrollReveal>
 
           {/* Stats Bar */}
-          <ScrollReveal delay={200}>
+          <ScrollReveal>
             <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 py-8 border-y border-sand">
               <div>
                 <span className="block font-mono text-3xl lg:text-4xl font-bold text-terracotta">
-                  {publishedProjects.length}+
+                  {projects.length}+
                 </span>
                 <span className="text-sm text-gray-500 font-sans uppercase tracking-wider">
                   Projects Delivered
@@ -130,7 +172,7 @@ export default function PortfolioPage() {
       {/* Filter Section */}
       <section className="pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <ScrollReveal delay={300}>
+          <ScrollReveal>
             <IndustryFilter
               industries={industries}
               activeIndustry={activeIndustry}
@@ -143,8 +185,14 @@ export default function PortfolioPage() {
       {/* Portfolio Grid */}
       <section className="pb-20 lg:pb-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <ScrollReveal delay={400}>
+          <ScrollReveal>
             <PortfolioGrid projects={filteredProjects} />
+
+            {filteredProjects.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-gray-500">No projects found.</p>
+              </div>
+            )}
           </ScrollReveal>
         </div>
       </section>

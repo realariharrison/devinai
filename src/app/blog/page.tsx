@@ -1,35 +1,70 @@
-import { Suspense } from 'react';
-import { Metadata } from 'next';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
 import { BlogGrid } from '@/components/blog/BlogGrid';
 import { BlogCategoryFilter } from '@/components/blog/BlogCategoryFilter';
 import { demoBlogPosts, demoBlogCategories } from '@/lib/demo-data';
-
-export const metadata: Metadata = {
-  title: 'Intelligence Briefings | DevinAI',
-  description: 'Strategic insights on Outcome Architecture, technical deep dives, and real-world case studies from enterprise software projects.',
-};
-
-function BlogContent() {
-  // In production, these would come from Supabase
-  const posts = demoBlogPosts.filter((post) => post.published);
-  const categories = demoBlogCategories;
-
-  return (
-    <>
-      {/* Category Filter */}
-      <div className="mb-12 border-b border-sand pb-4">
-        <BlogCategoryFilter categories={categories} />
-      </div>
-
-      {/* Blog Grid */}
-      <BlogGrid posts={posts} showFeatured />
-    </>
-  );
-}
+import { supabase, isDemoMode } from '@/lib/supabase';
+import type { BlogPost, BlogCategory } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 export default function BlogPage() {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
+
+  useEffect(() => {
+    async function fetchData() {
+      // Check if in demo mode
+      if (isDemoMode()) {
+        setIsDemo(true);
+        setPosts(demoBlogPosts.filter((post) => post.published));
+        setCategories(demoBlogCategories);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('blog_categories')
+          .select('*')
+          .order('sort_order', { ascending: true });
+
+        if (categoriesError) throw categoriesError;
+
+        // Fetch published posts with author and category
+        const { data: postsData, error: postsError } = await supabase
+          .from('blog_posts')
+          .select(`
+            *,
+            author:profiles(*),
+            category:blog_categories(*)
+          `)
+          .eq('published', true)
+          .order('published_at', { ascending: false });
+
+        if (postsError) throw postsError;
+
+        setCategories(categoriesData || []);
+        setPosts(postsData || []);
+      } catch (error) {
+        console.error('Error fetching blog data:', error);
+        // Fallback to demo data on error
+        setIsDemo(true);
+        setPosts(demoBlogPosts.filter((post) => post.published));
+        setCategories(demoBlogCategories);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
   return (
     <div className="min-h-screen bg-cream">
       <Header />
@@ -54,15 +89,27 @@ export default function BlogPage() {
       {/* Blog Content */}
       <section className="pb-20 lg:pb-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-20">
-                <div className="w-8 h-8 border-2 border-terracotta/30 border-t-terracotta rounded-full animate-spin" />
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-terracotta" />
+            </div>
+          ) : (
+            <>
+              {/* Category Filter */}
+              <div className="mb-12 border-b border-sand pb-4">
+                <BlogCategoryFilter categories={categories} />
               </div>
-            }
-          >
-            <BlogContent />
-          </Suspense>
+
+              {/* Blog Grid */}
+              <BlogGrid posts={posts} showFeatured />
+
+              {posts.length === 0 && (
+                <div className="text-center py-20">
+                  <p className="text-gray-500">No posts published yet.</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
 
