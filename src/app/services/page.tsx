@@ -12,10 +12,46 @@ import {
   Workflow,
   ArrowRight,
   Check,
-  FileText
+  FileText,
+  Server,
+  Brain,
+  Network
 } from 'lucide-react';
 
 const services = [
+  {
+    icon: Server,
+    title: 'MCP Server Development',
+    description: 'Build powerful Model Context Protocol servers and UI applications. Connect AI models to your data, tools, and systems with production-ready infrastructure.',
+    features: [
+      'Custom MCP server implementation',
+      'Claude Desktop & IDE integrations',
+      'MCP-powered UI applications',
+      'Tool & resource orchestration',
+    ],
+  },
+  {
+    icon: Brain,
+    title: 'AI Engineering',
+    description: 'Transform your products with intelligent capabilities. From prompt engineering to full AI system architecture, we build AI that delivers real business value.',
+    features: [
+      'LLM integration & fine-tuning',
+      'Prompt engineering & optimization',
+      'RAG & knowledge systems',
+      'AI-powered feature development',
+    ],
+  },
+  {
+    icon: Network,
+    title: 'ML Engineering',
+    description: 'Production machine learning systems that scale. We design, train, and deploy models with robust MLOps practices for reliable, maintainable AI infrastructure.',
+    features: [
+      'Model training & optimization',
+      'MLOps & pipeline automation',
+      'Feature engineering',
+      'Model monitoring & retraining',
+    ],
+  },
   {
     icon: Code2,
     title: 'Custom Development',
