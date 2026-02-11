@@ -36,10 +36,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Safety timeout - ensure loading never hangs forever
+    const timeout = setTimeout(() => {
+      console.warn('Auth initialization timeout - forcing loading to false');
+      setLoading(false);
+    }, 5000);
+
     // Get initial session
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('Auth getSession error:', error);
+          setLoading(false);
+          return;
+        }
+
         setUser(session?.user ?? null);
 
         if (session?.user) {
@@ -48,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('Auth initialization error:', error);
       } finally {
+        clearTimeout(timeout);
         setLoading(false);
       }
     };
@@ -55,22 +69,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null);
+    let subscription: { unsubscribe: () => void } | null = null;
+    try {
+      const { data } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          setUser(session?.user ?? null);
 
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          } else {
+            setProfile(null);
+          }
+
+          setLoading(false);
         }
-
-        setLoading(false);
-      }
-    );
+      );
+      subscription = data.subscription;
+    } catch (error) {
+      console.error('Auth state change listener error:', error);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      clearTimeout(timeout);
+      subscription?.unsubscribe();
     };
   }, []);
 
