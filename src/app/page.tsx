@@ -1,5 +1,3 @@
-import { isDemoMode } from '@/lib/supabase';
-import { DemoBanner } from '@/components/shared/DemoBanner';
 import { Header } from '@/components/shared/Header';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { ThreePillarsSection } from '@/components/landing/ThreePillarsSection';
@@ -10,11 +8,8 @@ import { ArchitectureCTA } from '@/components/landing/ArchitectureCTA';
 import { Footer } from '@/components/shared/Footer';
 
 export default function HomePage() {
-  const isDemo = isDemoMode();
-
   return (
     <div className="min-h-screen bg-cream">
-      {isDemo && <DemoBanner />}
       <Header />
       <main>
         <HeroSection />
