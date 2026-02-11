@@ -1,23 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
+import { supabase, isDemoMode } from '@/lib/supabase';
 import {
   demoDashboardStats,
   demoSystemAuditLeads,
 } from '@/lib/demo-data';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { DataTable, Column } from '@/components/admin/DataTable';
-import type { SystemAuditLead } from '@/lib/types';
+import type { SystemAuditLead, DashboardStats } from '@/lib/types';
 import {
   Users,
   UserPlus,
   FileText,
   Mail,
+  Briefcase,
   ArrowRight,
   Plus,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 
 const statusColors: Record<SystemAuditLead['status'], string> = {
@@ -30,8 +33,89 @@ const statusColors: Record<SystemAuditLead['status'], string> = {
 
 export default function AdminDashboardPage() {
   const { isDemo } = useAuth();
-  const [stats] = useState(demoDashboardStats);
-  const [recentLeads] = useState(demoSystemAuditLeads.slice(0, 5));
+  const [stats, setStats] = useState<DashboardStats>(demoDashboardStats);
+  const [recentLeads, setRecentLeads] = useState<SystemAuditLead[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    if (isDemoMode()) {
+      setStats(demoDashboardStats);
+      setRecentLeads(demoSystemAuditLeads.slice(0, 5));
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Fetch all counts in parallel
+      const [
+        leadsResult,
+        postsResult,
+        subscribersResult,
+        projectsResult,
+      ] = await Promise.all([
+        supabase.from('system_audit_leads').select('id, status, created_at'),
+        supabase.from('blog_posts').select('id, published'),
+        supabase.from('newsletter_subscribers').select('id, active'),
+        supabase.from('portfolio_projects').select('id, published'),
+      ]);
+
+      // Calculate stats
+      const leads = leadsResult.data || [];
+      const posts = postsResult.data || [];
+      const subscribers = subscribersResult.data || [];
+      const projects = projectsResult.data || [];
+
+      // Calculate new leads this week
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const newLeadsThisWeek = leads.filter(
+        (lead) => new Date(lead.created_at) >= oneWeekAgo
+      ).length;
+
+      // Calculate conversion rate (leads that reached 'scheduled' or beyond)
+      const convertedStatuses = ['scheduled', 'completed'];
+      const convertedLeads = leads.filter((lead) =>
+        convertedStatuses.includes(lead.status)
+      ).length;
+      const conversionRate = leads.length > 0
+        ? Math.round((convertedLeads / leads.length) * 100 * 10) / 10
+        : 0;
+
+      setStats({
+        totalLeads: leads.length,
+        newLeadsThisWeek,
+        publishedPosts: posts.filter((p) => p.published).length,
+        totalSubscribers: subscribers.filter((s) => s.active).length,
+        publishedProjects: projects.filter((p) => p.published).length,
+        conversionRate,
+      });
+
+      // Fetch recent leads with full data
+      const { data: recentLeadsData } = await supabase
+        .from('system_audit_leads')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      setRecentLeads(recentLeadsData || []);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      // Fallback to demo data
+      setStats(demoDashboardStats);
+      setRecentLeads(demoSystemAuditLeads.slice(0, 5));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setLoading(true);
+    fetchDashboardData();
+  };
 
   const leadColumns: Column<SystemAuditLead>[] = [
     {
@@ -75,6 +159,14 @@ export default function AdminDashboardPage() {
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-terracotta" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -85,7 +177,10 @@ export default function AdminDashboardPage() {
             Welcome back. Here&apos;s your overview.
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-sand rounded-lg text-gray-700 hover:bg-cream transition-colors">
+        <button
+          onClick={handleRefresh}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-sand rounded-lg text-gray-700 hover:bg-cream transition-colors"
+        >
           <RefreshCw className="w-4 h-4" />
           <span className="text-sm font-medium">Refresh</span>
         </button>
@@ -95,24 +190,22 @@ export default function AdminDashboardPage() {
         <div className="bg-terracotta/10 border border-terracotta/30 rounded-lg p-4">
           <p className="text-gray-900 text-sm">
             <strong>Demo Mode:</strong> Displaying sample data. Connect Supabase
-            to see real data.
+            to see real metrics.
           </p>
         </div>
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatsCard
           label="Total Leads"
           value={stats.totalLeads}
           icon={Users}
-          trend={{ value: 12, direction: 'up' }}
         />
         <StatsCard
           label="New This Week"
           value={stats.newLeadsThisWeek}
           icon={UserPlus}
-          trend={{ value: 8, direction: 'up' }}
         />
         <StatsCard
           label="Published Posts"
@@ -120,10 +213,14 @@ export default function AdminDashboardPage() {
           icon={FileText}
         />
         <StatsCard
+          label="Portfolio Projects"
+          value={stats.publishedProjects}
+          icon={Briefcase}
+        />
+        <StatsCard
           label="Subscribers"
           value={stats.totalSubscribers}
           icon={Mail}
-          trend={{ value: 15, direction: 'up' }}
         />
       </div>
 
@@ -135,7 +232,7 @@ export default function AdminDashboardPage() {
             <h2 className="text-lg font-semibold text-gray-900">Recent Leads</h2>
             <Link
               href="/admin/leads"
-              className="flex items-center gap-1 text-sm text-terracotta hover:text-terracotta-600 transition-colors"
+              className="flex items-center gap-1 text-sm text-terracotta hover:text-terracotta/80 transition-colors"
             >
               View all
               <ArrowRight className="w-4 h-4" />
@@ -207,7 +304,7 @@ export default function AdminDashboardPage() {
               {stats.conversionRate}%
             </p>
             <p className="text-sm text-white/60 mt-2">
-              From lead to scheduled audit
+              Leads → Scheduled Audits
             </p>
           </div>
         </div>
