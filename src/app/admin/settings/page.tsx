@@ -35,7 +35,7 @@ export default function AdminSettingsPage() {
   const [siteSettings, setSiteSettings] = useState({
     site_title: 'DevinAI',
     site_description: 'Outcome Architecture for Predictable Software Growth',
-    contact_email: 'ari@devinai.com',
+    contact_email: 'hello@devinai.com',
   });
 
   const handleSave = async () => {

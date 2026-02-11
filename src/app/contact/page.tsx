@@ -89,10 +89,10 @@ export default function ContactPage() {
                       <div>
                         <h3 className="text-gray-900 font-medium mb-1">Email</h3>
                         <a
-                          href="mailto:ari@devinai.com"
+                          href="mailto:hello@devinai.com"
                           className="text-gray-600 hover:text-terracotta transition-colors"
                         >
-                          ari@devinai.com
+                          hello@devinai.com
                         </a>
                       </div>
                     </div>

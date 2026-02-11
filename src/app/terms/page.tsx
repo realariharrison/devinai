@@ -182,7 +182,7 @@ export default function TermsPage() {
                     </h3>
                     <p>
                       You have the right to access, correct, or delete your personal information.
-                      To exercise these rights, contact us at ari@devinai.com.
+                      To exercise these rights, contact us at hello@devinai.com.
                     </p>
                   </div>
                 </div>
@@ -228,8 +228,8 @@ export default function TermsPage() {
                     <ul className="list-none space-y-2">
                       <li>
                         <strong className="text-gray-900">Email:</strong>{' '}
-                        <a href="mailto:ari@devinai.com" className="text-terracotta hover:text-terracotta/80">
-                          ari@devinai.com
+                        <a href="mailto:hello@devinai.com" className="text-terracotta hover:text-terracotta/80">
+                          hello@devinai.com
                         </a>
                       </li>
                     </ul>

@@ -16,7 +16,7 @@ async function sendFrameworkEmail(email: string) {
 
   try {
     await resend.emails.send({
-      from: 'DevinAI <hello@devinai.com>',
+      from: 'DevinAI <hello@outcome.devinai.com>',
       to: email,
       subject: 'Your Outcome Architecture Framework',
       html: `
