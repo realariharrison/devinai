@@ -152,7 +152,7 @@ export default function FrameworkPage() {
                       <FileText className="w-4 h-4" />
                       <span>outcome-architecture-framework.pdf</span>
                     </div>
-                    <span className="text-gray-400">24 pages</span>
+                    <span className="text-gray-400">18 pages</span>
                   </div>
                 </div>
 
