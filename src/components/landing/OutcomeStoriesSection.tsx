@@ -27,13 +27,21 @@ export function OutcomeStoriesSection() {
         {/* Testimonial Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {featuredProjects.map((project) => {
-            // Find the most impactful outcome metric
-            const primaryOutcome = project.outcomes[0];
-            const metricHighlight = primaryOutcome
-              ? `${Math.abs(
-                  Math.round(((primaryOutcome.after - primaryOutcome.before) / primaryOutcome.before) * 100)
-                )}% ${primaryOutcome.after > primaryOutcome.before ? 'Increase' : 'Reduction'}`
-              : null;
+            // Find the most impactful outcome metric (skip if before is 0)
+            const primaryOutcome = project.outcomes.find(o => o.before !== 0) || project.outcomes[0];
+            let metricHighlight: string | null = null;
+
+            if (primaryOutcome && primaryOutcome.before !== 0) {
+              const percentChange = Math.abs(
+                Math.round(((primaryOutcome.after - primaryOutcome.before) / primaryOutcome.before) * 100)
+              );
+              if (isFinite(percentChange)) {
+                metricHighlight = `${percentChange}% ${primaryOutcome.after > primaryOutcome.before ? 'Increase' : 'Reduction'}`;
+              }
+            } else if (primaryOutcome) {
+              // For metrics starting from 0, show the absolute value
+              metricHighlight = `${primaryOutcome.after} ${primaryOutcome.unit}`;
+            }
 
             return (
               <div
