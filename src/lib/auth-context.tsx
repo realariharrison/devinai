@@ -139,12 +139,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     if (isDemo) {
+      // In demo mode, redirect to home page
+      window.location.href = '/';
       return;
     }
 
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+    // Redirect to home page after sign out
+    window.location.href = '/';
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
