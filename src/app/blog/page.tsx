@@ -49,8 +49,19 @@ export default function BlogPage() {
 
         if (postsError) throw postsError;
 
-        setCategories(categoriesData || []);
-        setPosts(postsData || []);
+        // Use fetched data, or fall back to demo if empty
+        const fetchedCategories = categoriesData || [];
+        const fetchedPosts = postsData || [];
+
+        if (fetchedPosts.length > 0) {
+          setCategories(fetchedCategories.length > 0 ? fetchedCategories : demoBlogCategories);
+          setPosts(fetchedPosts);
+        } else {
+          // No posts in DB, use demo data
+          setIsDemo(true);
+          setCategories(demoBlogCategories);
+          setPosts(demoBlogPosts.filter((post) => post.published));
+        }
       } catch (error) {
         console.error('Error fetching blog data:', error);
         // Fallback to demo data on error
