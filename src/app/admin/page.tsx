@@ -49,18 +49,26 @@ export default function AdminDashboardPage() {
       return;
     }
 
+    // Add timeout to prevent infinite loading
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Query timeout')), 10000)
+    );
+
     try {
-      // Fetch all counts in parallel
+      // Fetch all counts in parallel with timeout
       const [
         leadsResult,
         postsResult,
         subscribersResult,
         projectsResult,
-      ] = await Promise.all([
-        supabase.from('system_audit_leads').select('id, status, created_at'),
-        supabase.from('blog_posts').select('id, published'),
-        supabase.from('newsletter_subscribers').select('id, active'),
-        supabase.from('portfolio_projects').select('id, published'),
+      ] = await Promise.race([
+        Promise.all([
+          supabase.from('system_audit_leads').select('id, status, created_at'),
+          supabase.from('blog_posts').select('id, published'),
+          supabase.from('newsletter_subscribers').select('id, active'),
+          supabase.from('portfolio_projects').select('id, published'),
+        ]),
+        timeoutPromise,
       ]);
 
       // Calculate stats
