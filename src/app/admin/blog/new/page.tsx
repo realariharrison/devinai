@@ -9,6 +9,7 @@ import { demoBlogCategories } from '@/lib/demo-data';
 import type { BlogCategory } from '@/lib/types';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import { markdownToTipTap } from '@/lib/markdown-to-tiptap';
 
 export default function NewBlogPostPage() {
   const router = useRouter();
@@ -82,11 +83,14 @@ export default function NewBlogPostPage() {
     }
 
     try {
+      // Convert markdown to TipTap JSON format
+      const tipTapContent = markdownToTipTap(formData.content);
+
       const { error } = await supabase.from('blog_posts').insert({
         title: formData.title,
         slug: formData.slug,
         excerpt: formData.excerpt,
-        content: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: formData.content }] }] },
+        content: tipTapContent,
         category_id: formData.category_id || null,
         reading_time: formData.reading_time,
         published: formData.published,
@@ -179,16 +183,41 @@ export default function NewBlogPostPage() {
         {/* Content */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Content *
+            Content * <span className="font-normal text-gray-500">(Markdown supported)</span>
           </label>
           <textarea
             value={formData.content}
             onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
             required
-            rows={12}
-            className="w-full px-4 py-3 border border-sand rounded-lg focus:outline-none focus:ring-2 focus:ring-terracotta text-gray-900 resize-none font-mono text-sm"
-            placeholder="Write your post content here..."
+            rows={16}
+            className="w-full px-4 py-3 border border-sand rounded-lg focus:outline-none focus:ring-2 focus:ring-terracotta text-gray-900 resize-y font-mono text-sm"
+            placeholder="# Heading
+
+Write your content here using Markdown...
+
+## Subheading
+
+Regular paragraph with **bold** and *italic* text.
+
+- Bullet point 1
+- Bullet point 2
+
+1. Numbered item
+2. Another item
+
+> Blockquote text
+
+\`inline code\` or code blocks:
+
+\`\`\`javascript
+const example = 'code block';
+\`\`\`
+
+[Link text](https://example.com)"
           />
+          <p className="text-xs text-gray-500 mt-2">
+            Supports: # Headings, **bold**, *italic*, `code`, [links](url), lists, blockquotes, code blocks
+          </p>
         </div>
 
         {/* Category & Reading Time */}
