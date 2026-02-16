@@ -103,7 +103,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // Profile might not exist - RLS might block or no row yet
+        setProfile(null);
+        return;
+      }
+
+      console.log('Profile loaded:', data?.role);
       setProfile(data as Profile);
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -119,10 +126,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    // If sign-in succeeded, fetch profile immediately (don't wait for listener)
+    if (!error && data.user) {
+      setUser(data.user);
+      await fetchProfile(data.user.id);
+    }
 
     return { error };
   };

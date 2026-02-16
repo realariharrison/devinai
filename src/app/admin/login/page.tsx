@@ -31,6 +31,8 @@ export default function AdminLoginPage() {
       if (error) {
         setError('Invalid email or password');
       } else {
+        // signIn now waits for profile, so isAdmin should be set
+        // Navigate to admin - layout will show access denied if not admin
         router.push('/admin');
       }
     } catch {

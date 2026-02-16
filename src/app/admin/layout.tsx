@@ -42,11 +42,23 @@ export default function AdminLayout({
     return <>{children}</>;
   }
 
-  // Not authenticated - show loading while redirecting
-  if (!user || !isAdmin) {
+  // Not authenticated or not admin - show appropriate message
+  if (!user) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-terracotta" />
+      </div>
+    );
+  }
+
+  // User exists but not admin - show access denied
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-cream flex flex-col items-center justify-center gap-4">
+        <p className="text-gray-600">You do not have admin access.</p>
+        <p className="text-sm text-gray-500">
+          Please set <code className="bg-sand px-1.5 py-0.5 rounded">role = &apos;admin&apos;</code> in your Supabase profiles table.
+        </p>
       </div>
     );
   }
