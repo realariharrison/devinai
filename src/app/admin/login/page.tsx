@@ -29,14 +29,15 @@ export default function AdminLoginPage() {
     try {
       const { error } = await signIn(email, password);
       if (error) {
-        setError('Invalid email or password');
+        // Show actual error message for better debugging
+        setError(error.message || 'Invalid email or password');
       } else {
-        // signIn now waits for profile, so isAdmin should be set
         // Navigate to admin - layout will show access denied if not admin
         router.push('/admin');
       }
-    } catch {
-      setError('An unexpected error occurred');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setSubmitting(false);
     }

@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<{ error: AuthError | null }> => {
     if (isDemo) {
       // In demo mode, set the demo user when signing in
       setUser(demoUser as unknown as User);
@@ -126,18 +126,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null };
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // Add timeout to prevent hanging forever
+    const timeoutMs = 15000;
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Sign in timeout - please try again')), timeoutMs)
+    );
 
-    // If sign-in succeeded, fetch profile immediately (don't wait for listener)
-    if (!error && data.user) {
-      setUser(data.user);
-      await fetchProfile(data.user.id);
+    try {
+      const signInPromise = supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      const { data, error } = await Promise.race([signInPromise, timeoutPromise]);
+
+      if (error) {
+        return { error };
+      }
+
+      // If sign-in succeeded, fetch profile with its own timeout
+      if (data.user) {
+        setUser(data.user);
+        // Don't block on profile fetch - do it in background
+        fetchProfile(data.user.id).catch(console.error);
+      }
+
+      return { error: null };
+    } catch (err) {
+      console.error('Sign in error:', err);
+      // Return a mock AuthError for timeout
+      return {
+        error: {
+          message: err instanceof Error ? err.message : 'Sign in failed',
+          status: 500,
+        } as AuthError,
+      };
     }
-
-    return { error };
   };
 
   const signInWithMagicLink = async (email: string) => {
