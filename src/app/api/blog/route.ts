@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, supabase, isDemoMode } from '@/lib/supabase';
+import { supabaseAdmin, isDemoMode } from '@/lib/supabase';
 import { markdownToTipTap } from '@/lib/markdown-to-tiptap';
 
 export async function POST(request: NextRequest) {
@@ -9,23 +9,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'Demo mode' });
     }
 
-    // Check auth
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
     if (!supabaseAdmin) {
       return NextResponse.json(
         { error: 'Server not configured. SUPABASE_SECRET_KEY required.' },
@@ -33,8 +16,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Parse body once at the start
     const body = await request.json();
     const {
+      user_id,
       title,
       slug,
       excerpt,
@@ -47,6 +32,27 @@ export async function POST(request: NextRequest) {
       seo_title,
       seo_description,
     } = body;
+
+    // Verify user_id was provided
+    if (!user_id) {
+      return NextResponse.json({ error: 'Unauthorized - no user ID' }, { status: 401 });
+    }
+
+    // Verify user exists and is admin using service role
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', user_id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Profile lookup error:', profileError);
+      return NextResponse.json({ error: 'Unauthorized - user not found' }, { status: 401 });
+    }
+
+    if (profile.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden - admin access required' }, { status: 403 });
+    }
 
     // Convert markdown to TipTap JSON
     const tipTapContent = markdownToTipTap(content || '');
@@ -63,7 +69,7 @@ export async function POST(request: NextRequest) {
       cover_image: cover_image || null,
       seo_title: seo_title || title,
       seo_description: seo_description || excerpt,
-      author_id: session.user.id,
+      author_id: user_id,
       published_at: published ? new Date().toISOString() : null,
     }).select().single();
 

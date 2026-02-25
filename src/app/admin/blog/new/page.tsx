@@ -86,6 +86,7 @@ export default function NewBlogPostPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          user_id: user?.id,
           title: formData.title,
           slug: formData.slug,
           excerpt: formData.excerpt,
