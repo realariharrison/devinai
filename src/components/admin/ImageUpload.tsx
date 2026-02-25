@@ -144,6 +144,7 @@ export function ImageUpload({
               alt="Cover image"
               fill
               className="object-cover"
+              unoptimized
             />
           </div>
           <button
