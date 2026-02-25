@@ -1,14 +1,35 @@
-'use client';
-
-import Link from 'next/link';
-import { ArrowRight, Clock } from 'lucide-react';
+import { ArrowRight, Calendar } from 'lucide-react';
 import { ScrollReveal } from '@/components/shared/ScrollReveal';
-import { demoBlogPosts } from '@/lib/demo-data';
-import { formatShortDate } from '@/lib/utils';
+
+// Static blog posts - links to Substack
+const blogPosts = [
+  {
+    id: '1',
+    title: 'Why Most AI Pilots Fail: The Missing Infrastructure Layer',
+    excerpt: 'Reasoning is only 10% of the battle. The other 90% is the architectural "bridge" that enables reliable action in regulated domains.',
+    date: '2026.02',
+    category: 'AI Infrastructure',
+    url: 'https://novoquantnexus.substack.com/p/why-most-ai-pilots-fail-the-missing',
+  },
+  {
+    id: '2',
+    title: 'Scaling MCP: Lessons from 100M Records',
+    excerpt: 'What changes when you shift from query-time computation to prediction infrastructure. A deep dive into sub-50ms latency for agents.',
+    date: '2026.02',
+    category: 'Technical',
+    url: 'https://novoquantnexus.substack.com/p/scaling-mcp-lessons-from-100m-records',
+  },
+  {
+    id: '3',
+    title: 'From Conversational to Computational AI',
+    excerpt: 'How orchestration layers move models beyond chat interfaces and into high-stakes decision pipelines.',
+    date: '2026.02',
+    category: 'AI Infrastructure',
+    url: 'https://novoquantnexus.substack.com/p/from-conversational-to-computational',
+  },
+];
 
 export function IntelligenceBriefingsSection() {
-  const latestPosts = demoBlogPosts.slice(0, 3);
-
   return (
     <section className="relative bg-cream py-24 lg:py-32 overflow-hidden">
       {/* Background pattern */}
@@ -35,26 +56,30 @@ export function IntelligenceBriefingsSection() {
                 Intelligence Briefings
               </h2>
               <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                Strategic insights on software architecture, scaling patterns,
-                and outcome-focused development.
+                Deep dives into AI infrastructure, MCP orchestration, and building
+                intelligence systems that scale.
               </p>
             </div>
-            <Link
-              href="/blog"
+            <a
+              href="https://substack.com/@ariharrison"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden lg:inline-flex items-center text-terracotta hover:text-terracotta-500 transition-colors duration-200 font-medium mt-6 lg:mt-0"
             >
-              View All Insights
+              View All on Substack
               <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
+            </a>
           </div>
         </ScrollReveal>
 
         {/* Blog Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {latestPosts.map((post, index) => (
+          {blogPosts.map((post, index) => (
             <ScrollReveal key={post.id} delay={index * 150} duration={800}>
-              <Link
-                href={`/blog/${post.slug}`}
+              <a
+                href={post.url}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group block h-full"
               >
                 <article className="relative bg-white border border-sand rounded-2xl overflow-hidden h-full flex flex-col transition-all duration-300 hover:border-taupe hover:shadow-warm">
@@ -69,7 +94,7 @@ export function IntelligenceBriefingsSection() {
                     {/* Category Badge */}
                     <div className="absolute top-4 left-4">
                       <span className="bg-white/90 backdrop-blur-sm text-terracotta text-xs font-mono uppercase tracking-wider px-3 py-1 rounded-full">
-                        {post.category?.name || 'Insights'}
+                        {post.category}
                       </span>
                     </div>
                   </div>
@@ -88,20 +113,20 @@ export function IntelligenceBriefingsSection() {
 
                     {/* Meta */}
                     <div className="mt-6 pt-4 border-t border-sand flex items-center justify-between text-sm">
-                      <span className="text-gray-500">
-                        {post.published_at ? formatShortDate(post.published_at) : 'Draft'}
+                      <span className="flex items-center gap-1.5 text-gray-500">
+                        <Calendar className="w-4 h-4" />
+                        {post.date}
                       </span>
-                      <div className="flex items-center text-gray-500">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {post.reading_time} min read
-                      </div>
+                      <span className="text-terracotta font-medium group-hover:underline">
+                        Read on Substack →
+                      </span>
                     </div>
                   </div>
 
                   {/* Hover indicator */}
                   <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-terracotta group-hover:w-full transition-all duration-500" />
                 </article>
-              </Link>
+              </a>
             </ScrollReveal>
           ))}
         </div>
@@ -109,13 +134,15 @@ export function IntelligenceBriefingsSection() {
         {/* Mobile View All Link */}
         <ScrollReveal delay={600}>
           <div className="mt-12 text-center lg:hidden">
-            <Link
-              href="/blog"
+            <a
+              href="https://substack.com/@ariharrison"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center text-terracotta hover:text-terracotta-500 transition-colors duration-200 font-medium"
             >
-              View All Insights
+              View All on Substack
               <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
+            </a>
           </div>
         </ScrollReveal>
       </div>
