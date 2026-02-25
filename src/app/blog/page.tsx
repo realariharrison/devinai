@@ -27,26 +27,36 @@ export default function BlogPage() {
         return;
       }
 
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
       try {
-        // Fetch categories
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from('blog_categories')
-          .select('*')
-          .order('sort_order', { ascending: true });
+        // Fetch categories and posts in parallel with timeout
+        const [categoriesResult, postsResult] = await Promise.all([
+          supabase
+            .from('blog_categories')
+            .select('*')
+            .order('sort_order', { ascending: true })
+            .abortSignal(controller.signal),
+          supabase
+            .from('blog_posts')
+            .select(`
+              *,
+              author:profiles(*),
+              category:blog_categories(*)
+            `)
+            .eq('published', true)
+            .order('published_at', { ascending: false })
+            .abortSignal(controller.signal),
+        ]);
+
+        clearTimeout(timeoutId);
+
+        const { data: categoriesData, error: categoriesError } = categoriesResult;
+        const { data: postsData, error: postsError } = postsResult;
 
         if (categoriesError) throw categoriesError;
-
-        // Fetch published posts with author and category
-        const { data: postsData, error: postsError } = await supabase
-          .from('blog_posts')
-          .select(`
-            *,
-            author:profiles(*),
-            category:blog_categories(*)
-          `)
-          .eq('published', true)
-          .order('published_at', { ascending: false });
-
         if (postsError) throw postsError;
 
         // Use fetched data, or fall back to demo if empty
@@ -63,6 +73,7 @@ export default function BlogPage() {
           setPosts(demoBlogPosts.filter((post) => post.published));
         }
       } catch (error) {
+        clearTimeout(timeoutId);
         console.error('Error fetching blog data:', error);
         // Fallback to demo data on error
         setIsDemo(true);

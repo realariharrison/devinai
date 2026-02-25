@@ -20,10 +20,14 @@ interface BlogPostPageProps {
 }
 
 async function getPost(slug: string): Promise<BlogPost | null> {
-  // Check demo mode
+  // Check demo mode first
   if (isDemoMode()) {
     return demoBlogPosts.find((p) => p.slug === slug && p.published) || null;
   }
+
+  // Add timeout to prevent hanging
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
   try {
     const { data, error } = await supabase
@@ -35,36 +39,41 @@ async function getPost(slug: string): Promise<BlogPost | null> {
       `)
       .eq('slug', slug)
       .eq('published', true)
-      .single();
+      .single()
+      .abortSignal(controller.signal);
+
+    clearTimeout(timeoutId);
 
     if (error || !data) {
-      // Fall back to demo data
+      console.log('Blog post not found in DB, checking demo:', slug);
       return demoBlogPosts.find((p) => p.slug === slug && p.published) || null;
     }
 
     return data as BlogPost;
-  } catch {
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.error('Blog fetch error:', err);
     return demoBlogPosts.find((p) => p.slug === slug && p.published) || null;
   }
 }
 
 async function getRelatedPosts(post: BlogPost): Promise<BlogPost[]> {
-  if (isDemoMode()) {
+  const demoFallback = () => {
     const related = demoBlogPosts
-      .filter((p) => p.published && p.id !== post.id && p.category_id === post.category_id)
+      .filter((p) => p.published && p.id !== post.id)
       .slice(0, 2);
-
-    if (related.length < 2) {
-      const others = demoBlogPosts
-        .filter((p) => p.published && p.id !== post.id && !related.find((r) => r.id === p.id))
-        .slice(0, 2 - related.length);
-      related.push(...others);
-    }
     return related;
+  };
+
+  if (isDemoMode()) {
+    return demoFallback();
   }
 
+  // Add timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
   try {
-    // Get posts from same category
     const { data } = await supabase
       .from('blog_posts')
       .select(`
@@ -75,25 +84,24 @@ async function getRelatedPosts(post: BlogPost): Promise<BlogPost[]> {
       .eq('published', true)
       .neq('id', post.id)
       .limit(2)
-      .order('published_at', { ascending: false });
+      .order('published_at', { ascending: false })
+      .abortSignal(controller.signal);
+
+    clearTimeout(timeoutId);
 
     if (data && data.length > 0) {
       return data as BlogPost[];
     }
 
-    // Fall back to demo
-    return demoBlogPosts
-      .filter((p) => p.published && p.id !== post.id)
-      .slice(0, 2);
+    return demoFallback();
   } catch {
-    return demoBlogPosts
-      .filter((p) => p.published && p.id !== post.id)
-      .slice(0, 2);
+    clearTimeout(timeoutId);
+    return demoFallback();
   }
 }
 
-// Dynamic page - no static generation for DB content
-export const dynamic = 'force-dynamic';
+// Revalidate every 60 seconds (ISR) - faster loads with fresh-ish data
+export const revalidate = 60;
 
 // Generate metadata for each post
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
