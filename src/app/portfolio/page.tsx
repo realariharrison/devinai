@@ -1,109 +1,73 @@
-'use client';
-
-import { useState, useEffect, useMemo } from 'react';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
 import { ScrollReveal } from '@/components/shared/ScrollReveal';
-import { PortfolioGrid, IndustryFilter } from '@/components/portfolio';
-import { demoPortfolioProjects } from '@/lib/demo-data';
-import { supabase, isDemoMode } from '@/lib/supabase';
-import type { PortfolioProject } from '@/lib/types';
-import { Briefcase, Loader2 } from 'lucide-react';
+import { Briefcase, ArrowUpRight, Clock } from 'lucide-react';
+
+// Static portfolio projects with GitHub links
+const portfolioProjects = [
+  {
+    id: '1',
+    slug: 'markey-luxury-marketplace',
+    client_name: 'Markey',
+    project_title: 'Multi-Vendor Luxury Marketplace Platform',
+    industry: 'E-commerce',
+    duration: '3 weeks',
+    tech_stack: ['Next.js 15', 'React 19', 'Supabase', 'Stripe Connect', 'Tailwind CSS', 'Claude AI'],
+    outcome_metric: '75%',
+    outcome_label: 'dev time reduction',
+    github_url: 'https://github.com/realariharrison/markey',
+  },
+  {
+    id: '2',
+    slug: 'ai-groceries-delivery',
+    client_name: 'AI Groceries',
+    project_title: 'AI-Powered Grocery Delivery Platform',
+    industry: 'Food & Delivery',
+    duration: '2 weeks',
+    tech_stack: ['Next.js 15', 'React 19', 'Supabase', 'Stripe', 'Tailwind CSS', 'Claude AI'],
+    outcome_metric: '50%',
+    outcome_label: 'cost reduction',
+    github_url: 'https://github.com/realariharrison/ai-groceries',
+  },
+  {
+    id: '3',
+    slug: 'vcphi-venture-capital',
+    client_name: 'VC Phi',
+    project_title: 'Venture Capital Portfolio Platform',
+    industry: 'Finance',
+    duration: '2 weeks',
+    tech_stack: ['Next.js 15', 'React 19', 'Supabase', 'Tailwind CSS', 'Claude AI', 'Recharts'],
+    outcome_metric: '80%',
+    outcome_label: 'dev time reduction',
+    github_url: 'https://github.com/realariharrison/vcphi',
+  },
+  {
+    id: '4',
+    slug: 'biglabs-consulting',
+    client_name: 'Biglabs',
+    project_title: 'Enterprise Consulting Platform',
+    industry: 'Consulting',
+    duration: '2 weeks',
+    tech_stack: ['Next.js 15', 'React 19', 'Supabase', 'Tailwind CSS', 'Claude AI', 'Recharts'],
+    outcome_metric: '50%',
+    outcome_label: 'cost reduction',
+    github_url: 'https://github.com/realariharrison/biglabs',
+  },
+  {
+    id: '5',
+    slug: 'ai-fee-creator-platform',
+    client_name: 'AI Fee',
+    project_title: 'Creator Monetization Platform',
+    industry: 'Creator Economy',
+    duration: '2 weeks',
+    tech_stack: ['Next.js 15', 'React 19', 'Supabase', 'Stripe', 'Tailwind CSS', 'Claude AI'],
+    outcome_metric: '50%',
+    outcome_label: 'cost reduction',
+    github_url: 'https://github.com/realariharrison/ai-fee',
+  },
+];
 
 export default function PortfolioPage() {
-  const [projects, setProjects] = useState<PortfolioProject[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeIndustry, setActiveIndustry] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchData() {
-      // Check if in demo mode
-      if (isDemoMode()) {
-        setProjects(demoPortfolioProjects.filter((p) => p.published));
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Fetch published projects
-        const { data, error } = await supabase
-          .from('portfolio_projects')
-          .select('*')
-          .eq('published', true)
-          .order('display_order', { ascending: true });
-
-        if (error) throw error;
-
-        setProjects(data || []);
-      } catch (error) {
-        console.error('Error fetching portfolio data:', error);
-        // Fallback to demo data on error
-        setProjects(demoPortfolioProjects.filter((p) => p.published));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, []);
-
-  // Get unique industries
-  const industries = useMemo(() => {
-    const uniqueIndustries = new Set<string>();
-    projects.forEach((p) => {
-      if (p.industry) uniqueIndustries.add(p.industry);
-    });
-    return Array.from(uniqueIndustries).sort();
-  }, [projects]);
-
-  // Filter projects by industry
-  const filteredProjects = useMemo(() => {
-    if (!activeIndustry) return projects;
-    return projects.filter((p) => p.industry === activeIndustry);
-  }, [projects, activeIndustry]);
-
-  // Calculate total outcomes
-  const totalOutcomes = useMemo(() => {
-    let costReduction = 0;
-    let velocityIncrease = 0;
-
-    projects.forEach((project) => {
-      project.outcomes.forEach((outcome) => {
-        // Skip if before is 0 to avoid division by zero
-        if (outcome.before === 0) return;
-
-        if (outcome.metric.includes('Cost') || outcome.metric.includes('Time')) {
-          const reduction = Math.round(
-            Math.abs(((outcome.after - outcome.before) / outcome.before) * 100)
-          );
-          if (reduction > costReduction && isFinite(reduction)) costReduction = reduction;
-        }
-        if (outcome.metric.includes('Velocity') || outcome.metric.includes('Features')) {
-          const increase = Math.round(outcome.after / outcome.before);
-          if (increase > velocityIncrease && isFinite(increase)) velocityIncrease = increase;
-        }
-      });
-    });
-
-    // Default values if no valid calculations
-    return {
-      costReduction: costReduction || 40,
-      velocityIncrease: velocityIncrease || 4
-    };
-  }, [projects]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-cream">
-        <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-terracotta" />
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-cream">
       <Header />
@@ -116,15 +80,15 @@ export default function PortfolioPage() {
               <div className="flex items-center gap-3 mb-4">
                 <Briefcase className="w-5 h-5 text-terracotta" />
                 <span className="text-sm font-sans text-terracotta uppercase tracking-wider">
-                  Case Studies
+                  Open Source Templates
                 </span>
               </div>
               <h1 className="font-serif text-4xl lg:text-5xl xl:text-6xl text-gray-900 mb-6">
-                Systems that scale without drama
+                Production-ready templates
               </h1>
               <p className="text-lg lg:text-xl text-gray-600 font-sans leading-relaxed">
-                Real transformations, measurable outcomes. Every project follows our Outcome
-                Architecture methodology to deliver predictable growth.
+                Full-stack Next.js templates with Supabase, Stripe, and AI integrations.
+                Clone, customize, and deploy in minutes.
               </p>
             </div>
           </ScrollReveal>
@@ -134,50 +98,37 @@ export default function PortfolioPage() {
             <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 py-8 border-y border-sand">
               <div>
                 <span className="block font-mono text-3xl lg:text-4xl font-bold text-terracotta">
-                  {projects.length}+
+                  {portfolioProjects.length}+
                 </span>
                 <span className="text-sm text-gray-500 font-sans uppercase tracking-wider">
-                  Projects Delivered
+                  Templates Available
                 </span>
               </div>
               <div>
                 <span className="block font-mono text-3xl lg:text-4xl font-bold text-terracotta">
-                  {totalOutcomes.costReduction}%
+                  50%
                 </span>
                 <span className="text-sm text-gray-500 font-sans uppercase tracking-wider">
-                  Avg Cost Reduction
+                  Avg Cost Savings
                 </span>
               </div>
               <div>
                 <span className="block font-mono text-3xl lg:text-4xl font-bold text-terracotta">
-                  {totalOutcomes.velocityIncrease}x
+                  4x
                 </span>
                 <span className="text-sm text-gray-500 font-sans uppercase tracking-wider">
-                  Velocity Increase
+                  Faster Development
                 </span>
               </div>
               <div>
                 <span className="block font-mono text-3xl lg:text-4xl font-bold text-terracotta">
-                  99.9%
+                  100%
                 </span>
                 <span className="text-sm text-gray-500 font-sans uppercase tracking-wider">
-                  Client Satisfaction
+                  Open Source
                 </span>
               </div>
             </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* Filter Section */}
-      <section className="pb-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <ScrollReveal>
-            <IndustryFilter
-              industries={industries}
-              activeIndustry={activeIndustry}
-              onFilterChange={setActiveIndustry}
-            />
           </ScrollReveal>
         </div>
       </section>
@@ -186,13 +137,89 @@ export default function PortfolioPage() {
       <section className="pb-20 lg:pb-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <ScrollReveal>
-            <PortfolioGrid projects={filteredProjects} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {portfolioProjects.map((project, index) => (
+                <a
+                  key={project.id}
+                  href={project.github_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`
+                    group block rounded-2xl overflow-hidden border border-sand
+                    hover:border-taupe hover:shadow-warm transition-all duration-300
+                    bg-white
+                    ${index === 0 ? 'md:col-span-2 lg:col-span-1' : ''}
+                  `}
+                >
+                  {/* Featured Image Placeholder */}
+                  <div className="relative overflow-hidden aspect-[16/9]">
+                    <div className="absolute inset-0 bg-gradient-to-br from-terracotta/20 via-taupe/20 to-sand/30" />
 
-            {filteredProjects.length === 0 && (
-              <div className="text-center py-20">
-                <p className="text-gray-500">No projects found.</p>
-              </div>
-            )}
+                    {/* Industry Badge */}
+                    <div className="absolute top-4 left-4">
+                      <span className="inline-block px-3 py-1 bg-terracotta text-white text-xs font-sans font-semibold rounded-full uppercase tracking-wide">
+                        {project.industry}
+                      </span>
+                    </div>
+
+                    {/* Duration Badge */}
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                      <Clock className="w-3.5 h-3.5 text-gray-500" />
+                      <span className="text-xs font-sans text-gray-700">{project.duration}</span>
+                    </div>
+
+                    {/* Hover Arrow */}
+                    <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="w-10 h-10 rounded-full bg-terracotta flex items-center justify-center">
+                        <ArrowUpRight className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6">
+                    {/* Client Name */}
+                    <span className="block text-xs font-sans font-semibold text-gray-500 uppercase tracking-widest mb-2">
+                      {project.client_name}
+                    </span>
+
+                    {/* Project Title */}
+                    <h3 className="font-serif text-xl text-gray-900 group-hover:text-terracotta transition-colors duration-300 mb-4">
+                      {project.project_title}
+                    </h3>
+
+                    {/* Key Outcome Metric */}
+                    <div className="flex items-baseline gap-2 mb-4">
+                      <span className="font-mono text-3xl font-bold text-terracotta">
+                        {project.outcome_metric}
+                      </span>
+                      <span className="text-sm text-gray-600 font-sans">
+                        {project.outcome_label}
+                      </span>
+                    </div>
+
+                    {/* Tech Stack Badges */}
+                    <div className="flex flex-wrap gap-2">
+                      {project.tech_stack.slice(0, 3).map((tech) => (
+                        <span
+                          key={tech}
+                          className="px-2 py-1 bg-sand/50 text-gray-600 text-xs font-sans rounded"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* GitHub Link Indicator */}
+                    <div className="mt-4 pt-4 border-t border-sand">
+                      <span className="text-terracotta text-sm font-medium group-hover:underline">
+                        View on GitHub →
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
           </ScrollReveal>
         </div>
       </section>
@@ -202,11 +229,11 @@ export default function PortfolioPage() {
         <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal>
             <h2 className="font-serif text-3xl lg:text-4xl text-white mb-6">
-              Ready to join these success stories?
+              Need a custom template?
             </h2>
             <p className="text-lg text-white/80 font-sans mb-8 max-w-2xl mx-auto">
-              Schedule a complimentary System Audit to discover how Outcome Architecture
-              can transform your development velocity.
+              Schedule a complimentary System Audit to discuss your specific requirements
+              and how we can accelerate your development.
             </p>
             <a
               href="/system-audit"
